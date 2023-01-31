@@ -98,7 +98,7 @@ class PGDAttack():
         delta = torch.zeros_like(X, requires_grad=True)
         ### Your code here
         model.eval()
-        for i in tqdm(range(self.attack_step)):
+        for i in range(self.attack_step):
             output = model(X+delta)
             loss = self.loss(output, y)
             model.zero_grad()
