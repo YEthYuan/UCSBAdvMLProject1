@@ -153,7 +153,7 @@ class FGSMAttack():
         # fgsm: delta=-eps*sign(grad(loss)|X)
         grad = X.grad.detach()
         sign = grad.sign()
-        delta = -1 * self.eps * sign
+        delta = self.eps * sign
         X.grad.zero_()
 
         ### Your code ends
