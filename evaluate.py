@@ -1,7 +1,9 @@
 import os
 import csv
 import argparse
+import random
 
+import numpy as np
 import torch
 from tqdm import tqdm
 
@@ -25,16 +27,23 @@ def parse_args():
         "--attack_step", type=int, default=10, help="Number of PGD iterations"
     )
     parser.add_argument(
-        "--loss_type", type=str, default="ce", choices=['ce','cw'], help="Loss type for attack"
+        "--attack_method", type=str, default="fgsm", choices=['fgsm', 'pgd'], help="Adversarial perturbation generate method"
+    )
+    parser.add_argument(
+        "--loss_type", type=str, default="ce", choices=['ce', 'cw'], help="Loss type for attack"
     )
     parser.add_argument(
         '--data_dir', default='./data/', type=str, help="Folder to store downloaded dataset"
     )
+    # parser.add_argument(
+    #     '--model_path', default='resnet_cifar10.pth', help='Filepath to the trained model'
+    # )
     parser.add_argument(
-        '--model_path', default='resnet_cifar10.pth', help='Filepath to the trained model'
+        '--model_path', default='pgd10_eps8.pth', help='Filepath to the trained model'
     )
     parser.add_argument("--targeted", action='store_true')
     parser.add_argument("--device", type=str, default="cuda:0", help="Device to use")
+    parser.add_argument("--seed", default=1, type=int, choices=[1, 412, 886], help="set the seed to make results reproducable")
     
     args = parser.parse_args()
     return args
@@ -42,6 +51,9 @@ def parse_args():
 
 def main():
     args = parse_args()
+
+    # fix seed
+    setup_seed(args.seed)
     
     # Load data
     test_loader, norm_layer = data_util.cifar10_dataloader(data_dir=args.data_dir)
@@ -49,17 +61,29 @@ def main():
     model = model_util.ResNet18(num_classes=num_classes)
     model.normalize = norm_layer
     model.load(args.model_path, args.device)
+    print("==> Loaded checkpoint at ", args.model_path)
     model = model.to(args.device)
 
     eps = args.eps / 255
     alpha = args.alpha / 255
+    print(f"==> Adversarial hyper-parameters: eps={args.eps}/255, alpha={args.alpha}/255")
 
     ### Your code here for creating the attacker object
     # Note that FGSM attack is a special case of PGD attack with specific hyper-parameters
     # You can also implement a separate FGSM class if you want
-    attacker = attack_util.PGDAttack(
-        attack_step=args.attack_step, eps=eps, alpha=alpha, loss_type=args.loss_type,
-        targeted=args.targeted, num_classes=num_classes)
+    if args.attack_method == "fgsm":
+        print("==> Using FGSM to generate adversarial perturbation!")
+        attacker = attack_util.FGSMAttack(
+            eps=eps, loss_type=args.loss_type,
+            targeted=args.targeted, num_classes=num_classes)
+    elif args.attack_method == "pgd":
+        print("==> Using PGD to generate adversarial perturbation!")
+        attacker = attack_util.PGDAttack(
+            attack_step=args.attack_step, eps=eps, alpha=alpha, loss_type=args.loss_type,
+            targeted=args.targeted, num_classes=num_classes)
+    else:
+        print("==> Evaluating the model without adversarial perturbation!")
+        attacker = None
     ### Your code ends
 
     total = 0
@@ -100,6 +124,14 @@ def main():
             robust_correct_num += torch.sum(torch.argmax(predictions, dim = -1) == labels).item()
 
     print(f"Total number of images: {total}\nClean accuracy: {clean_correct_num / total}\nRobust accuracy {robust_correct_num / total}")
+
+
+def setup_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True
 
 
 if __name__ == "__main__":
