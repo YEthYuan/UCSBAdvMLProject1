@@ -27,7 +27,7 @@ def parse_args():
         "--attack_step", type=int, default=10, help="Number of PGD iterations"
     )
     parser.add_argument(
-        "--attack_method", type=str, default="fgsm", choices=['fgsm', 'pgd'], help="Adversarial perturbation generate method"
+        "--attack_method", type=str, default="pgd", choices=['fgsm', 'pgd'], help="Adversarial perturbation generate method"
     )
     parser.add_argument(
         "--loss_type", type=str, default="ce", choices=['ce', 'cw'], help="Loss type for attack"
