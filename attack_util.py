@@ -106,7 +106,7 @@ class PGDAttack():
 
             grad = delta.grad.detach()
             sign = grad.sign()
-            delta.data = delta.data - self.alpha * sign  # descent update
+            delta.data = delta.data + self.alpha * sign  # descent update
             delta.data = torch.clamp(delta.data, -self.eps, self.eps)  # projection
             delta.data = torch.clamp(delta.data, self.lower_limit-X.data, self.upper_limit-X.data)
             delta.grad.zero_()
