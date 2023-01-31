@@ -35,11 +35,11 @@ def parse_args():
     parser.add_argument(
         '--data_dir', default='./data/', type=str, help="Folder to store downloaded dataset"
     )
-    # parser.add_argument(
-    #     '--model_path', default='resnet_cifar10.pth', help='Filepath to the trained model'
-    # )
     parser.add_argument(
-        '--model_path', default='pgd10_eps8.pth', help='Filepath to the trained model'
+        '--model_path',
+        default='resnet_cifar10.pth',
+        # default='pgd10_eps8.pth',
+        help='Filepath to the trained model'
     )
     parser.add_argument("--targeted", action='store_true')
     parser.add_argument("--device", type=str, default="cuda:0", help="Device to use")
@@ -75,12 +75,12 @@ def main():
         print("==> Using FGSM to generate adversarial perturbation!")
         attacker = attack_util.FGSMAttack(
             eps=eps, loss_type=args.loss_type,
-            targeted=args.targeted, num_classes=num_classes)
+            targeted=args.targeted, num_classes=num_classes, device=args.device)
     elif args.attack_method == "pgd":
         print("==> Using PGD to generate adversarial perturbation!")
         attacker = attack_util.PGDAttack(
             attack_step=args.attack_step, eps=eps, alpha=alpha, loss_type=args.loss_type,
-            targeted=args.targeted, num_classes=num_classes)
+            targeted=args.targeted, num_classes=num_classes, device=args.device)
     else:
         print("==> Evaluating the model without adversarial perturbation!")
         attacker = None
