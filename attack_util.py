@@ -110,9 +110,9 @@ class PGDAttack():
             delta.data = torch.clamp(delta.data, -self.eps, self.eps)  # projection
             delta.data = torch.clamp(delta.data, self.lower_limit-X.data, self.upper_limit-X.data)
             delta.grad.zero_()
-            print(f"PGD step {i} done!")
         ### Your code ends
 
+        print(delta[0,0,:])
         return delta
 
 
