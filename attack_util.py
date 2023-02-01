@@ -40,7 +40,7 @@ def set_param_grad_state(module, grad_state):
 ### PGD Attack
 class PGDAttack():
     def __init__(self, attack_step=10, eps=8 / 255, alpha=2 / 255, loss_type='ce', targeted=True,
-                 num_classes=10, device="cpu"):
+                 num_classes=10, confidence=0, target=1, device="cpu"):
         '''
         attack_step: number of PGD iterations
         eps: attack budget
@@ -54,6 +54,8 @@ class PGDAttack():
         self.upper_limit = 1
         self.targeted = targeted
         self.num_classes = num_classes
+        self.confidence = confidence
+        self.target = target
         self.device = device
         if loss_type == 'ce':
             self.loss = self.ce_loss
@@ -90,7 +92,22 @@ class PGDAttack():
         out = logits.clone()
         gt = y.clone()
 
-        pass
+        # create one-hot ground-truth labels
+        N = gt.shape[0]
+        onehot = torch.zeros((N, self.num_classes), requires_grad=False).to(self.device)
+        for i in range(N):
+            onehot[i][gt[i]] = 1
+
+        real_logit = (onehot * out).sum(dim=1)  # Zt0, shape: [batch_size,]
+        other_mask = 1.0 - onehot
+        other_max = (other_mask * out - onehot * 1e8 * 1.0).max(1)[0]  # the second term is to filter out the true logit
+        if self.targeted:
+            loss = torch.clamp(other_max - real_logit + self.confidence, min=0.)
+        else:
+            loss = torch.clamp(real_logit - other_max + self.confidence, min=0.)
+
+        loss = torch.mean(loss)
+        return loss
         ### Your code ends
 
     def perturb(self, model: nn.Module, X, y):

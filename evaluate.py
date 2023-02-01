@@ -27,10 +27,13 @@ def parse_args():
         "--attack_step", type=int, default=10, help="Number of PGD iterations"
     )
     parser.add_argument(
+        "--confidence", type=float, default=0., help="Confidence tau in C&W loss"
+    )
+    parser.add_argument(
         "--attack_method", type=str, default="pgd", choices=['fgsm', 'pgd'], help="Adversarial perturbation generate method"
     )
     parser.add_argument(
-        "--loss_type", type=str, default="ce", choices=['ce', 'cw'], help="Loss type for attack"
+        "--loss_type", type=str, default="cw", choices=['ce', 'cw'], help="Loss type for attack"
     )
     parser.add_argument(
         '--data_dir', default='./data/', type=str, help="Folder to store downloaded dataset"
@@ -41,7 +44,7 @@ def parse_args():
         # default='pgd10_eps8.pth',
         help='Filepath to the trained model'
     )
-    parser.add_argument("--targeted", action='store_true')
+    parser.add_argument("--targeted", action='store_true', default=True)
     parser.add_argument("--device", type=str, default="cuda:0", help="Device to use")
     parser.add_argument("--seed", default=1, type=int, choices=[1, 412, 886], help="set the seed to make results reproducable")
     
@@ -66,6 +69,7 @@ def main():
 
     eps = args.eps / 255
     alpha = args.alpha / 255
+    target_label = 1 ## only for targeted attack
     print(f"==> Adversarial hyper-parameters: eps={args.eps}/255, alpha={args.alpha}/255")
 
     ### Your code here for creating the attacker object
@@ -80,7 +84,8 @@ def main():
         print("==> Using PGD to generate adversarial perturbation!")
         attacker = attack_util.PGDAttack(
             attack_step=args.attack_step, eps=eps, alpha=alpha, loss_type=args.loss_type,
-            targeted=args.targeted, num_classes=num_classes, device=args.device)
+            targeted=args.targeted, num_classes=num_classes, confidence=args.confidence,
+            target=target_label, device=args.device)
     else:
         print("==> Evaluating the model without adversarial perturbation!")
         attacker = None
@@ -89,8 +94,6 @@ def main():
     total = 0
     clean_correct_num = 0
     robust_correct_num = 0
-    target_label = 1 ## only for targeted attack
-
 
     ## Make sure the model is in `eval` mode.
     model.eval()
