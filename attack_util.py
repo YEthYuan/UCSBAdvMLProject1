@@ -129,7 +129,7 @@ class PGDAttack():
             delta.grad.zero_()
         ### Your code ends
 
-        print(delta[0,0,:])
+        # print(delta[0,0,:])
         return delta
 
 
