@@ -33,7 +33,7 @@ def parse_args():
         "--attack_method", type=str, default="pgd", choices=['fgsm', 'pgd'], help="Adversarial perturbation generate method"
     )
     parser.add_argument(
-        "--loss_type", type=str, default="cw", choices=['ce', 'cw'], help="Loss type for attack"
+        "--loss_type", type=str, default="ce", choices=['ce', 'cw'], help="Loss type for attack"
     )
     parser.add_argument(
         '--data_dir', default='./data/', type=str, help="Folder to store downloaded dataset"
@@ -44,7 +44,7 @@ def parse_args():
         # default='pgd10_eps8.pth',
         help='Filepath to the trained model'
     )
-    parser.add_argument("--targeted", action='store_true', default=True)
+    parser.add_argument("--targeted", action='store_true', default=False)
     parser.add_argument("--device", type=str, default="cuda:0", help="Device to use")
     parser.add_argument("--seed", default=1, type=int, choices=[1, 412, 886], help="set the seed to make results reproducable")
     

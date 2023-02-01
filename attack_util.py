@@ -106,7 +106,7 @@ class PGDAttack():
         else:
             loss = torch.clamp(real_logit - other_max + self.confidence, min=0.)
 
-        loss = torch.mean(loss)
+        loss = -torch.mean(loss)
         return loss
         ### Your code ends
 
